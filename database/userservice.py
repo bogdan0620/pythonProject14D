@@ -1,21 +1,22 @@
 from database.models import User, Password
 from database import get_db
+import datetime
 
 
-def register_user_db(**kwargs):
+def register_user_db(phone_number, name, password, pincode, reg_date):
     db = next(get_db())
-    phone_number = kwargs.get('phone_number')
+    # phone_number = kwargs.get('phone_number')
 
     checker = db.query(User).filter_by(phone_number=phone_number).first()
 
     if checker:
         return 'Пользователь с таким номером уже существует'
 
-    new_user = User(**kwargs)
+    new_user = User(phone_number=phone_number, name=name, reg_date=datetime.datetime.now())
     db.add(new_user)
     db.commit()
 
-    new_user_password = Password(user_id=new_user.user_id, **kwargs)
+    new_user_password = Password(user_id=new_user.user_id, password=password, pincode=pincode)
     db.add(new_user_password)
     db.commit()
 
@@ -24,7 +25,7 @@ def register_user_db(**kwargs):
 
 def check_password_db(phone_number, password):
     db = next(get_db())
-    checker = db.query(Password).filter_by(phone_number=phone_number).first()
+    checker = db.query(Password).filter(User.phone_number == phone_number).first()
 
     if checker and checker.password == password:
         return checker.user_id
